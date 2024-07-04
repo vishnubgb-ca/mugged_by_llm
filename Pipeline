@@ -1,0 +1,18 @@
+pipeline{
+    agent any
+    environment{
+        airflow_instance_ip = credentials('airflow_instance_ip')
+        airflow_instance_private_key = credentials('airflow_key')
+        airflow_url = credentials('airflow_url')
+        airflow_username = credentials('airflow_username')
+        airflow_password = credentials('airflow_password')
+    }
+    stages{
+        
+        stage("Trigger Airflow Dag"){
+            steps{
+                 sh "python3 trigger_dag.py"
+                }
+            }
+        }
+}

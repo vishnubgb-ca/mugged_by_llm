@@ -20,27 +20,24 @@ df = df.drop(['sku'], axis=1)
 
 # Label encoding
 le = LabelEncoder()
-categorical_cols = ['potential_issue', 'deck_risk', 'ppap_risk', 'oe_constraint', 'stop_auto_buy', 'rev_stop', 'went_on_backorder']
+categorical_cols = ['potential_issue', 'oe_constraint', 'ppap_risk', 'stop_auto_buy', 'deck_risk', 'rev_stop', 'went_on_backorder']
 for col in categorical_cols:
     df[col] = le.fit_transform(df[col])
 
-# Balancing data
+# Balancing data using SMOTE
 smote = SMOTE(random_state=42)
-X = df.drop('went_on_backorder', axis=1)
-y = df['went_on_backorder']
-X, y = smote.fit_resample(X, y)
-df = pd.concat([X, y], axis=1)
+X_smote, y_smote = smote.fit_resample(df.drop('went_on_backorder', axis=1), df['went_on_backorder'])
+df = pd.concat([X_smote, y_smote], axis=1)
 
 # Outliers using IQR method
-numerical_cols = ['national_inv', 'forecast_3_month', 'in_transit_qty', 'forecast_6_month', 'forecast_9_month', 'sales_1_month', 'sales_3_month', 'sales_6_month', 'sales_9_month', 'min_bank', 'pieces_past_due', 'local_bo_qty']
-for col in numerical_cols:
-    Q1 = df[col].quantile(0.25)
-    Q3 = df[col].quantile(0.75)
-    IQR = Q3 - Q1
-    df = df[~((df[col] < (Q1 - 1.5 * IQR)) | (df[col] > (Q3 + 1.5 * IQR)))]
+Q1 = df.quantile(0.25)
+Q3 = df.quantile(0.75)
+IQR = Q3 - Q1
 
-# Save cleaned data
+df = df[~((df < (Q1 - 1.5 * IQR)) |(df > (Q3 + 1.5 * IQR))).any(axis=1)]
+
+# Save the transformed data frame
 df.to_csv('cleaned_data.csv', index=False)
 
-# Print top 5 rows of cleaned dataframe
+# Print the top 5 rows of cleaned dataframe
 print(df.head())
